@@ -48,7 +48,7 @@ function logout($redirectPath = '../index.php') {
 /**
  * Hàm lấy thông tin user hiện tại
  * 
- * @return array|null Trả về thông tin user nếu đã đăng nhập, null nếu chưa đăng nhập
+ * @return array Mảng chứa thông tin user hiện tại
  */
 function getCurrentUser() {
     // Khởi tạo session nếu chưa có
@@ -56,56 +56,61 @@ function getCurrentUser() {
         session_start();
     }
     
-    if (isset($_SESSION['user_id']) && isset($_SESSION['username'])) {
-        return [
-            'id' => $_SESSION['user_id'],
-            'username' => $_SESSION['username'],
-            'role' => $_SESSION['role'] ?? null
-        ];
-    }
-    
-    return null;
+    // Trả về thông tin user hiện tại
+    return [
+        'user_id' => $_SESSION['user_id'] ?? null,
+        'username' => $_SESSION['username'] ?? null,
+        'full_name' => $_SESSION['full_name'] ?? null,
+        'chucvu' => $_SESSION['chucvu'] ?? null
+    ];
 }
 
 /**
- * Hàm kiểm tra xem user đã đăng nhập chưa (không redirect)
+ * Hàm xác thực user khi đăng nhập
  * 
- * @return bool True nếu đã đăng nhập, False nếu chưa
+ * @param string $username Tên đăng nhập
+ * @param string $password Mật khẩu
+ * @return bool True nếu xác thực thành công, False nếu thất bại
  */
-function isLoggedIn() {
-    // Khởi tạo session nếu chưa có
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+function authenticateUser($username, $password) {
+    require_once 'db_connection.php';
     
-    return isset($_SESSION['user_id']) && isset($_SESSION['username']);
-}
-
-/**
- * Hàm xác thực đăng nhập
- * @param mysqli $conn
- * @param string $username
- * @param string $password
- * @return array|false Trả về thông tin user nếu đúng, false nếu sai
- */
-function authenticateUser($conn, $username, $password) {
-    $sql = "SELECT id, username, password, role FROM users WHERE username = ? LIMIT 1";
+    $conn = getDbConnection();
+    
+    // Truy vấn thông tin user từ bảng users
+    $sql = "SELECT id, username, password, role FROM users WHERE username = ?";
     $stmt = mysqli_prepare($conn, $sql);
-    if (!$stmt) return false;
     mysqli_stmt_bind_param($stmt, "s", $username);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    if ($result && mysqli_num_rows($result) > 0) {
-        $user = mysqli_fetch_assoc($result);
-        if ($password === $user['password']) { // Nên dùng password_verify nếu có mã hóa
+    
+    if ($row = mysqli_fetch_assoc($result)) {
+        // Kiểm tra mật khẩu (plain text)
+        if ($password === $row['password']) {
+            // Xác thực thành công, lưu thông tin vào session
+            $_SESSION['user_id'] = $row['id'];
+$_SESSION['username'] = $row['username'];
+            $_SESSION['full_name'] = $row['username']; // Tạm thời dùng username làm full_name
+            $_SESSION['chucvu'] = $row['role'];
+            
             mysqli_stmt_close($stmt);
-            return $user;
+            mysqli_close($conn);
+            return true;
         }
     }
-    if ($stmt) mysqli_stmt_close($stmt);
+    
+    mysqli_stmt_close($stmt);
+    mysqli_close($conn);
     return false;
 }
 
+/**
+ * Hàm tạo hash mật khẩu
+ * 
+ * @param string $password Mật khẩu gốc
+ * @return string Mật khẩu đã được hash
+ */
+function hashPassword($password) {
+    return password_hash($password, PASSWORD_DEFAULT);
+}
 ?>
-
-

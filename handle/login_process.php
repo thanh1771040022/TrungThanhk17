@@ -1,36 +1,28 @@
 <?php
 session_start();
-require_once '../functions/db_connection.php';
-require_once '../functions/auth.php'; 
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    handleLogin();
-}
-
-function handleLogin() {
-    $conn = getDbConnection();
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+    
     if (empty($username) || empty($password)) {
-        $_SESSION['error'] = 'Vui lòng nhập đầy đủ username và password!';
+        $_SESSION['error'] = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!';
         header('Location: ../index.php');
         exit();
     }
-
-    $user = authenticateUser($conn, $username, $password);
-    if ($user) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];
-        $_SESSION['success'] = 'Đăng nhập thành công!';
-        mysqli_close($conn);
-        header('Location: ../views/menu.php');
+    
+    require_once '../functions/auth.php';
+    
+    if (authenticateUser($username, $password)) {
+        $_SESSION['success'] = 'Đăng nhập thành công! Chào mừng bạn đến với hệ thống quản lý vé máy bay.';
+        header('Location: ../views/dashboard.php');
+        exit();
+    } else {
+        $_SESSION['error'] = 'Tên đăng nhập hoặc mật khẩu không đúng!';
+        header('Location: ../index.php');
         exit();
     }
-
-    $_SESSION['error'] = 'Tên đăng nhập hoặc mật khẩu không đúng!';
-    mysqli_close($conn);
+} else {
     header('Location: ../index.php');
     exit();
 }

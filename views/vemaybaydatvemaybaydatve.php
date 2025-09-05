@@ -2,17 +2,12 @@
 session_start();
 
 require_once '../functions/auth.php';
-require_once '../functions/khachhang_functions.php';
+require_once '../functions/vemaybaydatvemaybaydatve_functions.php';
 
 checkLogin();
 
-// Xử lý tìm kiếm
-$khachhang = [];
-if (isset($_GET['search']) && !empty($_GET['search'])) {
-    $khachhang = searchKhachHang($_GET['search']);
-} else {
-    $khachhang = getAllKhachHang();
-}
+// Lấy danh sách vé máy bay
+$veMayBay = getAllVeMayBay();
 ?>
 
 <!DOCTYPE html>
@@ -21,10 +16,9 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Khách hàng - Airline Management System</title>
+    <title>Quản lý Vé máy bay - Airline Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
-    <link href="../css/dark-mode.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -34,11 +28,11 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
     <!-- Main content -->
     <main id="main" class="main">
         <div class="pagetitle">
-            <h1>Quản lý Khách hàng</h1>
+            <h1>Quản lý Vé máy bay</h1>
             <nav>
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="dashboard.php">Trang chủ</a></li>
-                    <li class="breadcrumb-item active">Khách hàng</li>
+                    <li class="breadcrumb-item active">Vé máy bay</li>
                 </ol>
             </nav>
         </div>
@@ -65,26 +59,13 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Danh sách Khách hàng</h5>
+                            <h5 class="card-title">Danh sách Vé máy bay</h5>
 
-                            <!-- Search and Add buttons -->
+                            <!-- Add button -->
                             <div class="row mb-3">
-                                <div class="col-md-8">
-                                    <form method="GET" class="d-flex">
-                                        <input type="text" name="search" class="form-control me-2" 
-                                               placeholder="Tìm kiếm theo tên, CMND/CCCD, SĐT, email..." 
-                                               value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-                                        <button type="submit" class="btn btn-outline-primary me-2">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                        <a href="khachhang.php" class="btn btn-outline-secondary">
-                                            <i class="fas fa-refresh"></i>
-                                        </a>
-                                    </form>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <a href="khachhang/create_khachhang.php" class="btn btn-primary">
-                                        <i class="fas fa-plus"></i> Thêm khách hàng
+                                <div class="col-md-12 text-end">
+                                    <a href="vemaybay/create_vemaybay.php" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Thêm vé máy bay
                                     </a>
                                 </div>
                             </div>
@@ -95,42 +76,51 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                                     <thead class="table-primary">
                                         <tr>
                                             <th scope="col">#</th>
-                                            <th scope="col">Mã KH</th>
-                                            <th scope="col">Họ tên</th>
-                                            <th scope="col">Ngày sinh</th>
-                                            <th scope="col">CMND/CCCD</th>
-                                            <th scope="col">Số điện thoại</th>
-                                            <th scope="col">Email</th>
-                                            <th scope="col">Địa chỉ</th>
+                                            <th scope="col">Mã vé</th>
+                                            <th scope="col">Hãng HK</th>
+                                            <th scope="col">Chuyến bay</th>
+                                            <th scope="col">Hạng vé</th>
+                                            <th scope="col">Giá vé</th>
+                                            <th scope="col">Trạng thái</th>
                                             <th scope="col">Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php if (empty($khachhang)): ?>
+                                        <?php if (empty($veMayBay)): ?>
                                             <tr>
-                                                <td colspan="9" class="text-center">Không có dữ liệu</td>
+                                                <td colspan="8" class="text-center">Không có dữ liệu</td>
                                             </tr>
                                         <?php else: ?>
-                                            <?php foreach ($khachhang as $index => $kh): ?>
+                                            <?php foreach ($veMayBay as $index => $ve): ?>
                                                 <tr>
                                                     <td><?= $index + 1 ?></td>
-                                                    <td><?= htmlspecialchars($kh['MaKH']) ?></td>
-                                                    <td><?= htmlspecialchars($kh['HoTen']) ?></td>
-                                                    <td><?= htmlspecialchars($kh['NgaySinh']) ?></td>
-                                                    <td><?= htmlspecialchars($kh['CMND_CCCD']) ?></td>
-                                                    <td><?= htmlspecialchars($kh['SoDienThoai']) ?></td>
-                                                    <td><?= htmlspecialchars($kh['Email']) ?></td>
-                                                    <td><?= htmlspecialchars($kh['DiaChi']) ?></td>
+                                                    <td><?= htmlspecialchars($ve['MaVe']) ?></td>
+                                                    <td><?= htmlspecialchars($ve['TenHang']) ?></td>
+                                                    <td>
+                                                        <?= htmlspecialchars($ve['SanBayDi']) ?> → <?= htmlspecialchars($ve['SanBayDen']) ?><br>
+                                                        <small class="text-muted"><?= date('d/m/Y H:i', strtotime($ve['NgayGioDi'])) ?></small>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge <?= $ve['HangVe'] == 'Business' ? 'bg-warning' : 'bg-info' ?>">
+                                                            <?= htmlspecialchars($ve['HangVe']) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td><?= number_format($ve['GiaVe'], 0, ',', '.') ?> VNĐ</td>
+                                                    <td>
+                                                        <span class="badge <?= $ve['TrangThaiVe'] == 'Còn trống' ? 'bg-success' : 'bg-danger' ?>">
+                                                            <?= htmlspecialchars($ve['TrangThaiVe']) ?>
+                                                        </span>
+                                                    </td>
                                                     <td>
                                                         <div class="btn-group" role="group">
-                                                            <a href="khachhang/edit_khachhang.php?id=<?= $kh['MaKH'] ?>" 
+                                                            <a href="vemaybay/edit_vemaybay.php?id=<?= $ve['MaVe'] ?>" 
                                                                class="btn btn-sm btn-outline-warning" title="Sửa">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
                                                             <button type="button" class="btn btn-sm btn-outline-danger" 
                                                                     data-bs-toggle="modal" data-bs-target="#deleteModal" 
-                                                                    data-id="<?= $kh['MaKH'] ?>" 
-                                                                    data-name="<?= htmlspecialchars($kh['HoTen']) ?>"
+                                                                    data-id="<?= $ve['MaVe'] ?>" 
+                                                                    data-name="Vé <?= htmlspecialchars($ve['MaVe']) ?>"
                                                                     title="Xóa">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
@@ -160,13 +150,13 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    Bạn có chắc chắn muốn xóa khách hàng <span id="customerName"></span>?
+                    Bạn có chắc chắn muốn xóa <span id="itemName"></span>?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <form method="POST" action="../handle/khachhang_process.php" style="display: inline;">
+                    <form method="POST" action="../handle/vemaybay_process.php" style="display: inline;">
                         <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="makh" id="customerId">
+                        <input type="hidden" name="mave" id="itemId">
                         <button type="submit" class="btn btn-danger">Xóa</button>
                     </form>
                 </div>
@@ -176,19 +166,17 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Dark Mode JS -->
-    <script src="../js/dark-mode.js"></script>
 
     <script>
         // Handle delete modal
         const deleteModal = document.getElementById('deleteModal');
         deleteModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
-            const customerId = button.getAttribute('data-id');
-            const customerName = button.getAttribute('data-name');
+            const itemId = button.getAttribute('data-id');
+            const itemName = button.getAttribute('data-name');
             
-            document.getElementById('customerId').value = customerId;
-            document.getElementById('customerName').textContent = customerName;
+            document.getElementById('itemId').value = itemId;
+            document.getElementById('itemName').textContent = itemName;
         });
     </script>
 </body>
